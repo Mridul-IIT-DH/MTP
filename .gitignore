@@ -1,0 +1,19 @@
+# Directories
+
+# Ignore build artifacts
+build/
+
+# Ignore dot files directory
+dots/
+
+# Ignore generated images
+images/
+
+# Ignore input files
+inputs/
+
+# Ignore output files
+outputs/
+
+# Ignore miscellaneous stuff
+Miscellaneous/

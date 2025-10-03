@@ -1,0 +1,11 @@
+#include <iostream>
+
+void display() {
+    std::cout << "\nChoose one of the following options: \n"
+         << "1. Proposition 3.13 \n"
+         << "2. Brozozowski's Algorithm \n"
+         << "3. Minimal DFA (Determinise then minimize) \n"
+         << "4. Run all options 1, 2 and 3 \n"
+         << "5. Exit \n"
+         << std::endl;
+}

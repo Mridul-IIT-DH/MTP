@@ -1,30 +1,32 @@
 {
     "editor.stickyScroll.enabled": false,
-  "files.autoSave": "afterDelay",
-  "editor.wordWrap": "on",
-  "editor.minimap.showSlider": "always",
-  "notebook.editorOptionsCustomizations": {
-      "editor.tabSize": 4,
-      "editor.indentSize": 4,
-      "editor.insertSpaces": true
-  },
+    "files.autoSave": "afterDelay",
+    "editor.wordWrap": "on",
+    "editor.minimap.showSlider": "always",
+    "notebook.editorOptionsCustomizations": {
+        "editor.tabSize": 4,
+        "editor.indentSize": 4,
+        "editor.insertSpaces": true
+    },
+    
+    // GitHub theme
+    "workbench.colorTheme": "GitHub Dark High Contrast",
+    // To remove the rectangle box highlight
+    "workbench.colorCustomizations": {
+        "[GitHub Dark High Contrast]": {
+            "editor.lineHighlightBorder": "#00000000", // fully transparent
+            "textCodeBlock.background": "#00000000"
+        }
+    },
+    "workbench.editor.empty.hint": "hidden",
 
-  // GitHub theme
-  "workbench.colorTheme": "GitHub Dark High Contrast",
-  // To remove the rectangle box highlight
-  "workbench.colorCustomizations": {
-      "[GitHub Dark High Contrast]": {
-          "editor.lineHighlightBorder": "#00000000",// fully transparent
-          "textCodeBlock.background": "#00000000"
-      }
-  },
-
-  "workbench.editor.empty.hint": "hidden",
-
-  // Code runner
-  "code-runner.executorMap": {
-    "cpp": "cd $dir && mkdir -p ../../build && g++ *.cpp -o ../../build/$fileNameWithoutExt && ../../build/$fileNameWithoutExt"
-  },
-  "code-runner.clearPreviousOutput": true,
-  "code-runner.runInTerminal": true,
+    // Code runner
+    "code-runner.executorMap": {
+        "cpp": "cd $dir && mkdir -p ../../build && g++ *.cpp -o ../../build/$fileNameWithoutExt && ../../build/$fileNameWithoutExt"
+    },
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.runInTerminal": true,
+    "files.associations": {
+        "iostream": "cpp"
+    },
 }

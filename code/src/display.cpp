@@ -6,6 +6,7 @@ void display() {
          << "2. Brozozowski's Algorithm \n"
          << "3. Minimal DFA (Determinise then minimize) \n"
          << "4. Run all options 1, 2 and 3 \n"
-         << "5. Exit \n"
+         << "5. Check if two minimized DFAs are isomorphic \n"
+         << "6. Exit \n"
          << std::endl;
 }

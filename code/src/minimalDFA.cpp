@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void minimialDFA(Automaton& nonDeterministicAutomaton, const string& inputBaseName) {
+void minimalDFA(Automaton& nonDeterministicAutomaton, const string& inputBaseName) {
     string outputFilePath = "../../outputs/min_" + inputBaseName + ".txt";
     string outputDotFilePath = "../../dots/min_" + inputBaseName + ".dot";
 

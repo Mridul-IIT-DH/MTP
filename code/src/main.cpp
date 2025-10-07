@@ -13,7 +13,9 @@ void proposition313(const Automaton& nonDeterministicAutomaton, const string& in
 
 void brozozowskisAlgorithm(const Automaton& nonDeterministicAutomaton, const string& inputBaseName);
 
-void minimialDFA(Automaton& nonDeterministicAutomaton, const string& inputBaseName);
+void minimalDFA(Automaton& nonDeterministicAutomaton, const string& inputBaseName);
+
+void checkIsomorphism();
 
 int main() {
     string inputBaseName;
@@ -28,12 +30,20 @@ int main() {
 
         cin >> choice;
 
-        if (choice == 5) {
+        if (choice == 6) {
+            cout << "\n/////////////////////////\n";
+            cout << "\nThank you for being here.\n";
+            cout << "\n/////////////////////////\n";
+            cout << endl;
+
             return 0;
         }
 
-        cout << "\nEnter the input automaton file name (without .txt): ";
-        cin >> inputBaseName;
+        if (choice != 5) {
+            cout << "\nEnter the input automaton file name (without .txt): ";
+            
+            cin >> inputBaseName;
+        }
 
         Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
 
@@ -42,23 +52,32 @@ int main() {
                 proposition313(nonDeterministicAutomaton, inputBaseName);
 
                 break;
+
             case 2:
                 brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
 
                 break;
+
             case 3:
-                minimialDFA(nonDeterministicAutomaton, inputBaseName);
+                minimalDFA(nonDeterministicAutomaton, inputBaseName);
 
                 break;
+
             case 4:
                 proposition313(nonDeterministicAutomaton, inputBaseName);
 
                 brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
 
-                minimialDFA(nonDeterministicAutomaton, inputBaseName);
+                minimalDFA(nonDeterministicAutomaton, inputBaseName);
 
                 break;
+
             case 5:
+                checkIsomorphism();
+
+                break;
+
+            case 6:
                 return 0;
 
             default:

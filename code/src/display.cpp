@@ -7,6 +7,7 @@ void display() {
          << "3. Minimal DFA (Determinise then minimize) \n"
          << "4. Run all options 1, 2 and 3 \n"
          << "5. Check if two minimized DFAs are isomorphic \n"
-         << "6. Exit \n"
+         << "6. Regex to minimal DFA \n"
+         << "0. Exit \n"
          << std::endl;
 }

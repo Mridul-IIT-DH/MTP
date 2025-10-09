@@ -1,4 +1,5 @@
 #include "../include/Automaton.h"
+#include "../include/Dot.h"
 
 #include <fstream>
 #include <map>
@@ -7,7 +8,7 @@
 
 using namespace std;
 
-void generateIsomorphismDot(
+void Dot::generateIsomorphismDot(
     const Automaton& A,
     const Automaton& B,
     const map<int, int>& mapping,

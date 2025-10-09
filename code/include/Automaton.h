@@ -36,6 +36,31 @@ public:
         return transitions; 
     }
 
+    void addState(int s) {
+        states.insert(s);
+    }
+
+    void addInitialState(int s) {
+        initialStates.insert(s);
+    }
+
+    void addFinalState(int s) {
+        finalStates.insert(s);
+    }
+
+    void addTransition(int from, char symbol, int to) {
+        transitions[{from, symbol}].insert(to);
+        if (symbol != '#') alphabet.insert(symbol);
+    }
+
+    void setAlphabet(const std::set<char>& a) {
+        alphabet = a;
+    }
+
+    void clearTransitions() {
+        transitions.clear();
+    }
+
 private:
     std::set<int> states;
     std::set<int> initialStates;

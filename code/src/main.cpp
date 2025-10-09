@@ -1,5 +1,6 @@
 #include "../include/Automaton.h"
 #include "../include/Dot.h"
+#include "../include/RegexENFA.h"
 
 #include <iostream>
 
@@ -17,71 +18,67 @@ void minimalDFA(Automaton& nonDeterministicAutomaton, const string& inputBaseNam
 
 void checkIsomorphism();
 
+void regexToMinimalDFA();
+
 int main() {
     string inputBaseName;
-    string outputBaseName;
 
     while (true) {
         display();
 
         cout << "Enter your choice: ";
-
-        int choice = 0;
-
+        int choice = -1;
         cin >> choice;
 
-        if (choice == 6) {
+        if (choice == 0) {
             cout << "\n/////////////////////////\n";
             cout << "\nThank you for being here.\n";
             cout << "\n/////////////////////////\n";
             cout << endl;
 
             return 0;
-        }
-
-        if (choice != 5) {
+        } else if (choice == 1) {
             cout << "\nEnter the input automaton file name (without .txt): ";
             
             cin >> inputBaseName;
-        }
 
-        Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
+            Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
+            
+            proposition313(nonDeterministicAutomaton, inputBaseName);
+        } else if (choice == 2) {
+            cout << "\nEnter the input automaton file name (without .txt): ";
 
-        switch(choice) {
-            case 1:
-                proposition313(nonDeterministicAutomaton, inputBaseName);
+            cin >> inputBaseName;
+            
+            Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
+            
+            brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
+        } else if (choice == 3) {
+            cout << "\nEnter the input automaton file name (without .txt): ";
 
-                break;
-
-            case 2:
-                brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
-
-                break;
-
-            case 3:
-                minimalDFA(nonDeterministicAutomaton, inputBaseName);
-
-                break;
-
-            case 4:
-                proposition313(nonDeterministicAutomaton, inputBaseName);
-
-                brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
-
-                minimalDFA(nonDeterministicAutomaton, inputBaseName);
-
-                break;
-
-            case 5:
-                checkIsomorphism();
-
-                break;
-
-            case 6:
-                return 0;
-
-            default:
-                cout << "Invalid input!" << endl;
+            cin >> inputBaseName;
+            
+            Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
+            
+            minimalDFA(nonDeterministicAutomaton, inputBaseName);
+        } else if (choice == 4) {
+            cout << "\nEnter the input automaton file name (without .txt): ";
+            
+            cin >> inputBaseName;
+            
+            Automaton nonDeterministicAutomaton = createNonDeterministicAutomaton(inputBaseName);
+            
+            proposition313(nonDeterministicAutomaton, inputBaseName);
+            
+            brozozowskisAlgorithm(nonDeterministicAutomaton, inputBaseName);
+            
+            minimalDFA(nonDeterministicAutomaton, inputBaseName);
+        } else if (choice == 5) {
+            checkIsomorphism();
+        } else if (choice == 6) {
+            regexToMinimalDFA();
+        } else {
+            cout << "Invalid input!" << endl;
         }
     }
 

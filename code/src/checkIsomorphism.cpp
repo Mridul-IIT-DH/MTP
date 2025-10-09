@@ -1,17 +1,11 @@
 #include "../include/Automaton.h"
+#include "../include/Dot.h"
 
 #include <iostream>
 #include <map>
 #include <string>
 
 using namespace std;
-
-void generateIsomorphismDot(
-    const Automaton& A,
-    const Automaton& B,
-    const map<int, int>& mapping,
-    const string& filenameBase
-);
 
 void checkIsomorphism() {
     string file1;
@@ -37,8 +31,10 @@ void checkIsomorphism() {
 
     if (Automaton::isIsomorphic(A, B, &mapping)) {
         cout << "The DFAs are isomorphic (equivalent up to renaming)." << endl;
-    
-        generateIsomorphismDot(A, B, mapping, file1 + "_vs_" + file2);
+        
+        Dot dotGenerator;
+
+        dotGenerator.generateIsomorphismDot(A, B, mapping, file1 + "_vs_" + file2);
     
         cout << "Visualization generated: MTP/images/iso_" << file1 << "_vs_" << file2 << ".png" << endl;
     } else {

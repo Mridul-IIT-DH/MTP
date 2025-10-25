@@ -20,6 +20,8 @@ void checkIsomorphism();
 
 void regexToMinimalDFA();
 
+void automatonToImage(const string& inputBaseName);
+
 int main() {
     string inputBaseName;
 
@@ -77,6 +79,12 @@ int main() {
             checkIsomorphism();
         } else if (choice == 6) {
             regexToMinimalDFA();
+        } else if (choice == 7) {
+            cout << "\nEnter the input automaton file name (without .txt): ";
+
+            cin >> inputBaseName;
+
+            automatonToImage(inputBaseName);
         } else {
             cout << "Invalid input!" << endl;
         }

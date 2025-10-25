@@ -8,6 +8,7 @@ void display() {
          << "4. Run all options 1, 2 and 3 \n"
          << "5. Check if two minimized DFAs are isomorphic \n"
          << "6. Regex to minimal DFA \n"
+         << "7. Generate image of an automaton \n"
          << "0. Exit \n"
          << std::endl;
 }

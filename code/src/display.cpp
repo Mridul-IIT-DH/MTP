@@ -10,6 +10,7 @@ void display() {
          << "6. Regex to minimal DFA \n"
          << "7. Generate image of an automaton \n"
          << "8. NFA to Regular Expression \n"
+         << "9. Standardize Regular expression \n"
          << "0. Exit \n"
          << std::endl;
 }

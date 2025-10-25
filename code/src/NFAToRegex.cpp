@@ -1,4 +1,5 @@
 #include "../include/NFAToRegex.h"
+
 #include <map>
 #include <set>
 #include <string>

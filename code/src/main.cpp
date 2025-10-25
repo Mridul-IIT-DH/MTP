@@ -25,6 +25,8 @@ void automatonToImage(const string& inputBaseName);
 
 void nfaToRegex();
 
+void standardizeRegex();
+
 int main() {
     string inputBaseName;
 
@@ -90,6 +92,8 @@ int main() {
             automatonToImage(inputBaseName);
         } else if (choice == 8) {
             nfaToRegex();
+        } else if (choice == 9) {
+            standardizeRegex();
         } else {
             cout << "Invalid input!" << endl;
         }

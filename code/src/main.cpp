@@ -1,6 +1,7 @@
 #include "../include/Automaton.h"
 #include "../include/Dot.h"
 #include "../include/RegexENFA.h"
+#include "../include/NFAToRegex.h"
 
 #include <iostream>
 
@@ -21,6 +22,8 @@ void checkIsomorphism();
 void regexToMinimalDFA();
 
 void automatonToImage(const string& inputBaseName);
+
+void nfaToRegex();
 
 int main() {
     string inputBaseName;
@@ -85,6 +88,8 @@ int main() {
             cin >> inputBaseName;
 
             automatonToImage(inputBaseName);
+        } else if (choice == 8) {
+            nfaToRegex();
         } else {
             cout << "Invalid input!" << endl;
         }

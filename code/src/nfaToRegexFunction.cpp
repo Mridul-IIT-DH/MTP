@@ -7,31 +7,83 @@
 
 using namespace std;
 
+/**
+ * @brief Interactive wrapper that reads an NFA from the inputs folder
+ *        and converts it into a regular expression using the
+ *        state-elimination method (implemented in automatonToRegex()).
+ *
+ * @details
+ * This function:
+ *   1. Prompts the user for an input file base name (without .txt).
+ *   2. Reads the automaton from "../../inputs/<name>.txt".
+ *   3. Calls automatonToRegex(nfa) to compute the equivalent regex.
+ *   4. Writes the resulting regex to:
+ *         "../../outputs/regex_<name>.txt"
+ *   5. Prints the regex to the console.
+ *
+ * Notes:
+ *   - The prefix check (nfa_, enfa_, min_, etc.) currently does not
+ *     alter behavior, but it establishes a naming convention for the user.
+ *   - The regex returned may be:
+ *         ""   → empty language
+ *         "#"  → epsilon (empty string)
+ *         other expressions such as (a|b)*a
+ */
 void nfaToRegex() {
     string nfaBaseName;
+
+    // --------------------------------------------------------------
+    // Step 1: Ask the user for the base name of the automaton file.
+    // --------------------------------------------------------------
     cout << "\nEnter the NFA file name (from inputs folder, without .txt): ";
     cin >> nfaBaseName;
 
+    // --------------------------------------------------------------
+    // Step 2: Construct the full path to the input automaton.
+    //
+    // NOTE: The condition checking prefixes is redundant (same action
+    //       on both branches), but retained for naming consistency.
+    // --------------------------------------------------------------
     string nfaInputPath;
-    if (nfaBaseName.rfind("nfa_", 0) == 0 || nfaBaseName.rfind("enfa_", 0) == 0 || nfaBaseName.rfind("min_", 0) == 0 || nfaBaseName.rfind("pro_", 0) == 0 || nfaBaseName.rfind("bro_", 0) == 0) {
-        cout << "(Reading from inputs folder...)" << endl;
-        nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
-    } else {
+
+    if (nfaBaseName.rfind("nfa_", 0) == 0 ||
+        nfaBaseName.rfind("enfa_", 0) == 0 ||
+        nfaBaseName.rfind("min_", 0) == 0 ||
+        nfaBaseName.rfind("pro_", 0) == 0 ||
+        nfaBaseName.rfind("bro_", 0) == 0)
+    {
         cout << "(Reading from inputs folder...)" << endl;
         nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
     }
-    
+    else {
+        cout << "(Reading from inputs folder...)" << endl;
+        nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
+    }
+
+    // --------------------------------------------------------------
+    // Step 3: Read the automaton from text file.
+    // --------------------------------------------------------------
     Automaton nfa = Automaton::readAutomaton(nfaInputPath);
+
     if (nfa.getStates().empty()) {
         cout << "Error: Could not read automaton from " << nfaInputPath << endl;
         return;
     }
 
+    // --------------------------------------------------------------
+    // Step 4: Convert automaton → regular expression.
+    //         (Using the state elimination algorithm.)
+    // --------------------------------------------------------------
     cout << "Converting Automaton to Regular Expression..." << endl;
+
     string regex = automatonToRegex(nfa);
 
+    // --------------------------------------------------------------
+    // Step 5: Write resulting regex to the outputs folder.
+    // --------------------------------------------------------------
     string outputFilePath = "../../outputs/regex_" + nfaBaseName + ".txt";
     ofstream fout(outputFilePath);
+
     if (fout.is_open()) {
         fout << regex;
         fout.close();
@@ -40,11 +92,16 @@ void nfaToRegex() {
         cout << "\nError: Unable to write to output file " << outputFilePath << endl;
     }
 
+    // --------------------------------------------------------------
+    // Step 6: Print the meaning of the resulting regex.
+    // --------------------------------------------------------------
     if (regex.empty()) {
         cout << "Resulting language is the EMPTY SET (accepts no strings)." << endl;
-    } else if (regex == "#") {
+    }
+    else if (regex == "#") {
         cout << "Resulting regex (accepts only the empty string): #" << endl;
-    } else {
+    }
+    else {
         cout << "Resulting regex: " << regex << endl;
     }
 }

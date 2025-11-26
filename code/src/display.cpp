@@ -1,34 +1,18 @@
 #include <iostream>
 
-/**
- * @brief Displays the main program menu in the console.
+/*
+ * display()
  *
- * This function prints a list of numbered options that the user
- * can choose from. Each option corresponds to a specific automata-
- * related operation or algorithm implemented elsewhere in the project.
+ * Prints the main menu of the program. This function is called from main.cpp
+ * in every iteration of the main loop so that the user can choose one of the
+ * available operations (regex processing, automaton conversions, visualization,
+ * minimization routines, etc.).
  *
- * @details
- * The menu serves as the **main entry point for user interaction**
- * in the program. It provides access to key features such as:
- *  - Running theoretical propositions
- *  - Executing DFA minimization algorithms
- *  - Checking automaton isomorphism
- *  - Converting between automata and regular expressions
- *  - Generating visual representations
- *
- * The function only **displays** the options; it does not process
- * user input or execute any actions — that logic is handled in `main.cpp`.
- *
- * @example
- * ```cpp
- * display();
- * int choice;
- * std::cin >> choice;
- * // process choice ...
- * ```
+ * Note:
+ *  - Keep this function synchronized with the numeric options handled in main().
+ *  - Only prints text; all input handling is done in main.cpp.
  */
 void display() {
-    // Print the main user options menu to the console.
     std::cout << "\nChoose one of the following options:\n"
               << "1. Proposition 3.13\n"
               << "2. Brzozowski's Algorithm\n"
@@ -39,6 +23,7 @@ void display() {
               << "7. Generate image of an automaton\n"
               << "8. NFA to Regular Expression\n"
               << "9. Standardize Regular Expression\n"
+              << "10. Minimize Regex (AST + DFA canonicalization)\n"
               << "0. Exit\n"
               << std::endl;
 }

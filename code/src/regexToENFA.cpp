@@ -10,38 +10,34 @@
 
 using namespace std;
 
-/**
- * @brief A simple structure representing a partially-built ENFA fragment.
+/*
+ * ENFAFragment
  *
- * Each fragment has:
- *   - start : entry state of the fragment
- *   - end   : exit (accepting) state of the fragment
+ * Used in Thompson's construction. Each fragment contains:
+ *   start : entry state of the fragment
+ *   end   : exit state of the fragment
  *
- * Thompson’s construction connects these fragments together when
- * applying operations such as concatenation, union, or Kleene star.
+ * Larger ENFA structures are formed by connecting fragments via
+ * ε-transitions and literal transitions.
  */
 struct ENFAFragment {
     int start;
     int end;
 };
 
-// Global counter for generating unique state IDs
+/*
+ * Global state counter used to assign unique ENFA states.
+ */
 static int stateCounter = 0;
 
-/* ================================================================
-   Thompson Construction — Basic Building Blocks
-   ================================================================ */
-
-/**
- * @brief Creates a basic ENFA fragment representing a single symbol transition.
+/*
+ * createBasicENFA(A, symbol)
  *
- * For symbol 'a', this creates:
+ * Creates a basic ENFA fragment for a single literal transition:
  *
- *        (s1) --a--> (s2)
+ *      s1 --symbol--> s2
  *
- * @param A       Automaton to which states and transitions are added.
- * @param symbol  Input character for the transition.
- * @return ENFAFragment {start → end}
+ * Returns {s1, s2}.
  */
 static ENFAFragment createBasicENFA(Automaton& A, char symbol) {
     int s1 = stateCounter++;
@@ -52,25 +48,24 @@ static ENFAFragment createBasicENFA(Automaton& A, char symbol) {
     return {s1, s2};
 }
 
-/**
- * @brief Adds an ε-transition (represented by '#') to the automaton.
+/*
+ * addEpsilonTransition(A, from, to)
+ *
+ * Adds an ε-transition using '#' to represent epsilon.
  */
 static void addEpsilonTransition(Automaton& A, int from, int to) {
     A.addTransition(from, '#', to);
 }
 
-/* ================================================================
-   Utility: Insert explicit concatenation operator '.'
-   ================================================================ */
-
-/**
- * @brief Converts an implicit-concatenation regex into one containing
- *        explicit '.' operators.
+/*
+ * addConcatenation(regex)
  *
- * Example:
- *   "ab(c|d)*e"  →  "a.b.(c|d)*.e"
+ * Inserts explicit '.' operators between places where concatenation
+ * is implied. For example:
  *
- * This simplifies parsing using operator-precedence rules.
+ *      a(b|c)*d   →   a.(b|c)*.d
+ *
+ * Required to simplify operator precedence handling.
  */
 static string addConcatenation(const string& regex) {
     string result;
@@ -82,95 +77,98 @@ static string addConcatenation(const string& regex) {
         if (i + 1 < regex.size()) {
             char c2 = regex[i + 1];
 
-            // Insert '.' (concatenation) when:
-            //   - a literal or ')' or '*' is followed by
-            //   - a literal or '('
-            if ((isalnum(c1) || c1 == '*' || c1 == ')') &&
-                (isalnum(c2) || c2 == '(')) {
+            bool left  = (isalnum(c1) || c1 == '#' || c1 == '*' || c1 == ')');
+            bool right = (isalnum(c2) || c2 == '#' || c2 == '(');
+
+            if (left && right) {
                 result += '.';
             }
         }
     }
-
     return result;
 }
 
-/* ================================================================
-   Main Conversion Function — Thompson ENFA Construction
-   ================================================================ */
-
-/**
- * @brief Converts a regular expression into an ε-NFA using Thompson’s algorithm.
+/*
+ * regexToENFA(inputBaseName)
  *
- * @details
- * Pipeline:
- *   1. Read regex from "../../inputs/<name>.txt"
- *   2. Insert explicit concatenation operators.
- *   3. Use two stacks:
- *        - fragStack : holds ENFA fragments
- *        - opStack   : holds operators ('|', '.', '*', '(')
- *   4. Apply operators using precedence rules:
- *        precedence('*') = 3
- *        precedence('.') = 2
- *        precedence('|') = 1
- *   5. Thompson constructions:
+ * Reads a regular expression from ../../inputs/<inputBaseName>.txt
+ * and constructs its ε-NFA (ENFA) using Thompson's construction.
  *
- *      UNION:
- *           start → f1.start
- *           start → f2.start
- *           f1.end → end
- *           f2.end → end
- *
- *      CONCATENATION:
- *           f1.end → f2.start
- *
- *      KLEENE STAR:
- *           start → f.start
- *           start → end
- *           f.end → f.start
- *           f.end → end
- *
- *   6. Final fragment’s start = automaton initial state
- *   7. Final fragment’s end   = automaton final state
- *
- * The constructed ENFA is then written as text, a DOT graph, and a PNG image.
- *
- * @param inputBaseName The name of the regex input file (without .txt extension).
- * @return The constructed ε-NFA.
+ * Steps:
+ *   1. Read regex from file
+ *   2. Insert explicit concatenation operators
+ *   3. Use two stacks (operators + fragments)
+ *   4. Apply precedence rules:  '*' > '.' > '|'
+ *   5. Build ENFA via Thompson rules
+ *   6. Write ENFA to outputs folder
+ *   7. Generate DOT and PNG images
  */
 Automaton regexToENFA(const string& inputBaseName) {
 
-    // Reset state counter for fresh ENFA construction
     stateCounter = 0;
 
-    // --------------------------------------------------------------
-    // Step 1: Read regular expression from input file
-    // --------------------------------------------------------------
-    string inputPath = "../../inputs/" + inputBaseName + ".txt";
+    string inputPath  = "../../inputs/" + inputBaseName + ".txt";
     string outputPath = "../../outputs/enfa_" + inputBaseName + ".txt";
-    string dotPath    = "../../dots/enfa_"  + inputBaseName + ".dot";
+    string dotPath    = "../../dots/enfa_" + inputBaseName + ".dot";
 
+    /*
+     * Step 1: Read regex from file
+     */
     ifstream fin(inputPath);
     string regex;
     getline(fin, regex);
     fin.close();
 
-    // --------------------------------------------------------------
-    // Step 2: Insert explicit concatenation operators
-    // --------------------------------------------------------------
+    /*
+     * Step 2: Insert explicit concatenation operators
+     */
     regex = addConcatenation(regex);
 
-    // Storage for fragments and operators
+    /*
+     * Stacks used by the shunting-yard-like construction:
+     *   fragStack : ENFA fragments
+     *   opStack   : operators
+     */
     Automaton A;
     stack<ENFAFragment> fragStack;
     stack<char> opStack;
 
-    /* ===============================================================
-       Lambda: apply an operator using Thompson construction rules
-       =============================================================== */
+    /*
+     * Precedence function.
+     */
+    auto precedence = [](char op) {
+        if (op == '*') return 3;
+        if (op == '.') return 2;
+        if (op == '|') return 1;
+        return 0;
+    };
+
+    /*
+     * applyOp(op)
+     *
+     * Applies a regex operator to the ENFA fragment stack.
+     *
+     * Handles:
+     *   - Union     : f1 | f2
+     *   - Concat    : f1 . f2
+     *   - Kleene *  : f*
+     *
+     * Performs necessary ε-transitions.
+     */
     auto applyOp = [&](char op) {
+        if (op == '|' || op == '.') {
+            if (fragStack.size() < 2) {
+                cerr << "[ERROR] Malformed regex: insufficient operands for '" << op << "'\n";
+                return;
+            }
+        } else if (op == '*') {
+            if (fragStack.empty()) {
+                cerr << "[ERROR] Malformed regex: '*' missing operand\n";
+                return;
+            }
+        }
+
         if (op == '|') {
-            // UNION: f1 ∪ f2
             ENFAFragment f2 = fragStack.top(); fragStack.pop();
             ENFAFragment f1 = fragStack.top(); fragStack.pop();
 
@@ -188,7 +186,6 @@ Automaton regexToENFA(const string& inputBaseName) {
         }
 
         else if (op == '.') {
-            // CONCATENATION: f1 ∘ f2
             ENFAFragment f2 = fragStack.top(); fragStack.pop();
             ENFAFragment f1 = fragStack.top(); fragStack.pop();
 
@@ -197,7 +194,6 @@ Automaton regexToENFA(const string& inputBaseName) {
         }
 
         else if (op == '*') {
-            // KLEENE STAR: f*
             ENFAFragment f = fragStack.top(); fragStack.pop();
 
             int start = stateCounter++;
@@ -214,41 +210,30 @@ Automaton regexToENFA(const string& inputBaseName) {
         }
     };
 
-    /* ===============================================================
-       Precedence rules for operators
-       =============================================================== */
-    auto precedence = [](char op) {
-        if (op == '*') return 3;
-        if (op == '.') return 2;
-        if (op == '|') return 1;
-        return 0;
-    };
-
-    /* ===============================================================
-       Step 3: Parse regex using stacks (shunting-yard-like)
-       =============================================================== */
+    /*
+     * Step 3: Parse regex by scanning characters
+     */
     for (size_t i = 0; i < regex.size(); i++) {
         char c = regex[i];
 
-        if (isalnum(c)) {
-            // Literal → basic ENFA fragment
+        if (isalnum(c) || c == '#') {
             fragStack.push(createBasicENFA(A, c));
         }
         else if (c == '(') {
             opStack.push(c);
         }
         else if (c == ')') {
-            // Apply operators until '(' is reached
             while (!opStack.empty() && opStack.top() != '(') {
                 applyOp(opStack.top());
                 opStack.pop();
             }
-            if (!opStack.empty()) opStack.pop(); // remove '('
+            if (!opStack.empty()) opStack.pop();
         }
         else if (c == '*' || c == '|' || c == '.') {
             while (!opStack.empty() &&
                    opStack.top() != '(' &&
                    precedence(opStack.top()) >= precedence(c)) {
+
                 applyOp(opStack.top());
                 opStack.pop();
             }
@@ -256,23 +241,31 @@ Automaton regexToENFA(const string& inputBaseName) {
         }
     }
 
-    // Apply remaining operators
+    /*
+     * Apply remaining operators
+     */
     while (!opStack.empty()) {
         applyOp(opStack.top());
         opStack.pop();
     }
 
-    /* ===============================================================
-       Step 4: Finalize the ENFA
-       =============================================================== */
+    /*
+     * Combine final fragment into ENFA
+     */
+    if (fragStack.empty()) {
+        cerr << "[ERROR] regexToENFA: No fragments were produced\n";
+        return A;
+    }
+
     ENFAFragment result = fragStack.top();
+    fragStack.pop();
 
     A.addInitialState(result.start);
     A.addFinalState(result.end);
 
-    /* ===============================================================
-       Step 5: Write ENFA to file + generate DOT + PNG
-       =============================================================== */
+    /*
+     * Write automaton + generate DOT + PNG
+     */
     A.writeAutomaton(outputPath);
 
     Dot dotGen;

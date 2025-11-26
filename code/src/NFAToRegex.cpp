@@ -1,47 +1,42 @@
 #include "../include/NFAToRegex.h"
+#include "../include/RegexParser.h"
+#include "../include/RegexNormalize.h"
 
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
 #include <iostream>
+#include <climits>
 
 using namespace std;
 
-/* ===============================================================
-   Helper functions for constructing regular expressions
-   =============================================================== */
-
-/**
- * @brief Returns the union (alternation) of two regexes: r1 | r2.
+/*
+ * regexUnion(r1, r2)
  *
- * Rules:
- *  - If one is empty, return the other.
- *  - If they are equal, return one occurrence.
- *  - Maintain deterministic ordering (lexicographic) for consistency.
+ * Returns the union of two regex strings.
+ * Handles empty cases, duplicate avoidance, and alphabetical ordering.
  */
 static string regexUnion(string r1, string r2) {
     if (r1.empty()) return r2;
     if (r2.empty()) return r1;
     if (r1 == r2) return r1;
-    if (r1 > r2) swap(r1, r2);  // deterministic ordering
+    if (r1 > r2) swap(r1, r2);
     return "(" + r1 + "|" + r2 + ")";
 }
 
-/**
- * @brief Concatenation of two regexes: r1 r2.
+/*
+ * regexConcat(r1, r2)
  *
- * Special rules:
- *  - If either is empty → concatenation impossible → return empty.
- *  - '#' (epsilon) acts as identity element.
- *  - Parenthesize expressions containing '|' when needed.
+ * Concatenation of two regex strings.
+ * Removes epsilon (#) where appropriate and adds parentheses
+ * when operands contain union operations.
  */
 static string regexConcat(string r1, string r2) {
-    if (r1.empty() || r2.empty()) return ""; 
+    if (r1.empty() || r2.empty()) return "";
     if (r1 == "#") return r2;
     if (r2 == "#") return r1;
 
-    // Add parentheses around union expressions
     if (r1.find('|') != string::npos && r1.front() != '(')
         r1 = "(" + r1 + ")";
     if (r2.find('|') != string::npos && r2.front() != '(')
@@ -50,95 +45,56 @@ static string regexConcat(string r1, string r2) {
     return r1 + r2;
 }
 
-/**
- * @brief Kleene star of a regex: r*.
+/*
+ * regexStar(r)
  *
- * Rules:
- *  - Empty → ε
- *  - ε* = ε
- *  - Avoid unnecessary parentheses where possible.
+ * Applies the Kleene star to r.
+ * Takes care of epsilon (#), empty, and redundant star forms.
  */
 static string regexStar(string r) {
     if (r.empty()) return "#";
     if (r == "#") return "#";
-    if (r.length() == 1) return r + "*";
-    if (r.back() == '*') return r;  // avoid (r*)*
+    if (r.size() == 1) return r + "*";
+    if (r.back() == '*') return r;
     return "(" + r + ")*";
 }
 
-
-/* ===============================================================
-   Main NFA-to-Regex Conversion (State Elimination)
-   =============================================================== */
-
-/**
- * @brief Converts a (possibly ε-)NFA into a regular expression
- *        using the classical **state elimination algorithm**.
+/*
+ * automatonToRegex(A)
  *
- * ----------------------------------------------------------------
- * THEORETICAL OVERVIEW
- * ----------------------------------------------------------------
- * Given an NFA  A = (Q, Σ, δ, I, F), the algorithm:
+ * Converts a (possibly ε-)NFA into a regular expression using the
+ * state elimination method. Steps:
  *
- *   1. Creates a new unique start state s and final state f.
- *   2. Adds ε-transitions:
- *         s → i  for each original initial state i
- *         a → f  for each original final state a
- *
- *   3. Constructs a table R[u, v] containing regexes describing
- *      all direct transitions u → v.
- *
- *   4. Eliminates states one by one:
- *        If eliminating k,
- *        update each pair (i, j) by adding:
- *
- *           R[i,j] = R[i,j] ∪ ( R[i,k] · R[k,k]* · R[k,j] )
- *
- *   5. Remove all transitions involving k.
- *
- *   6. When only newStart and newFinal remain:
- *
- *         The resulting regex is R[newStart, newFinal].
- *
- * ----------------------------------------------------------------
- * This algorithm is correct and complete:
- *      L(regex) = L(NFA)
- * ----------------------------------------------------------------
- *
- * @param A   Input automaton.
- * @return    A regular expression describing L(A).
+ *   1. Copy automaton A into P.
+ *   2. Add a new global start and final state with ε transitions.
+ *   3. Initialize R[u,v] to store regex labels for edges.
+ *   4. Eliminate intermediate states using GNFA update rules:
+ *        R[i,j] = R[i,j] ∪ ( R[i,k] (R[k,k])* R[k,j] )
+ *   5. When only start and final remain, return R[start,final].
+ *   6. Pass through AST normalizer for readability.
  */
 string automatonToRegex(const Automaton& A) {
 
-    /* ==========================================================
-       Step 1: Make a working copy P of the automaton A
-       ========================================================== */
     Automaton P;
 
-    // Copy states
-    for (int s : A.getStates()) {
-        P.addState(s);
-    }
+    /*
+     * Copy states and transitions from A into P.
+     */
+    for (int s : A.getStates()) P.addState(s);
 
-    // Copy transitions
     for (auto const& [key, to_set] : A.getTransitions()) {
         int u = key.first;
-        char symbol = key.second;
-        for (int v : to_set) {
-            P.addTransition(u, symbol, v);
-        }
+        char sym = key.second;
+        for (int v : to_set) P.addTransition(u, sym, v);
     }
 
-    // Copy alphabet
     P.setAlphabet(A.getAlphabet());
 
-    /* ==========================================================
-       Step 2: Add new start state (s) and new final state (f)
-       ========================================================== */
-
+    /*
+     * Add new GNFA (Generalized Nondeterministic Finite Automaton) start and final states.
+     */
     int maxState = 0;
-    for (int s : P.getStates())
-        maxState = max(maxState, s);
+    for (int s : P.getStates()) maxState = max(maxState, s);
 
     int newStart = maxState + 1;
     int newFinal = maxState + 2;
@@ -146,85 +102,121 @@ string automatonToRegex(const Automaton& A) {
     P.addState(newStart);
     P.addState(newFinal);
 
-    // ε-transitions from newStart to original start states
+    /*
+     * ε-transitions from new start to original start states,
+     * and from original final states to new final.
+     */
     for (int s : A.getInitialStates()) {
         P.addTransition(newStart, '#', s);
     }
-    
-    // ε-transitions from original final states to newFinal
+
     for (int s : A.getFinalStates()) {
         P.addTransition(s, '#', newFinal);
     }
 
-    // Set new initial/final states
     P.addInitialState(newStart);
     P.addFinalState(newFinal);
 
-    /* ==========================================================
-       Step 3: Initialize R[u,v] with one-character regex transitions
-       ========================================================== */
-    map<pair<int, int>, string> R;
+    /*
+     * Initialize R[u,v] table mapping state pairs to regex strings.
+     */
+    map<pair<int,int>, string> R;
     set<int> allStates = P.getStates();
     set<int> statesToEliminate;
 
-    // We will eliminate all states except newStart and newFinal
     for (int s : allStates) {
         if (s != newStart && s != newFinal)
             statesToEliminate.insert(s);
     }
 
-    // Convert each transition into its regex form
     for (auto const& [key, to_set] : P.getTransitions()) {
         int u = key.first;
-        char symbol = key.second;
-        string s_symbol(1, symbol);  // turn char into string
+        char sym = key.second;
+        string t(1, sym);
 
         for (int v : to_set) {
-            R[{u, v}] = regexUnion(R[{u, v}], s_symbol);
+            R[{u,v}] = regexUnion(R[{u,v}], t);
         }
     }
 
+    /*
+     * State elimination loop.
+     * Select next state to eliminate using the heuristic
+     *   score = indegree * outdegree + indegree + outdegree
+     */
+    while (!statesToEliminate.empty()) {
 
-    /* ==========================================================
-       Step 4: Eliminate states one by one
-       ========================================================== */
-    for (int q_rip : statesToEliminate) {
+        int bestState = -1;
+        int bestScore = INT_MAX;
 
-        // Self-loop regex: R[k,k]* (if exists)
-        string R_kk = regexStar(R[{q_rip, q_rip}]);
+        for (int k : statesToEliminate) {
+            int indeg = 0, outdeg = 0;
 
-        // For every pair of states (i, j)
-        for (int q_i : allStates) {
-            if (q_i == q_rip) continue;
-            string R_ik = R[{q_i, q_rip}];
-            if (R_ik.empty()) continue;
+            for (auto &p : R) {
+                if (!p.second.empty() && p.first.second == k) indeg++;
+                if (!p.second.empty() && p.first.first == k) outdeg++;
+            }
 
-            for (int q_j : allStates) {
-                if (q_j == q_rip) continue;
-                string R_kj = R[{q_rip, q_j}];
-                if (R_kj.empty()) continue;
-
-                // Old R[i,j] and new contribution via k
-                string R_old = R[{q_i, q_j}];
-                string R_new = regexConcat(regexConcat(R_ik, R_kk), R_kj);
-
-                R[{q_i, q_j}] = regexUnion(R_old, R_new);
+            int score = indeg * outdeg + indeg + outdeg;
+            if (score < bestScore) {
+                bestScore = score;
+                bestState = k;
             }
         }
 
-        // Remove all R[*][k] and R[k][*]
-        map<pair<int, int>, string> temp_R;
-        for (auto const& [key, val] : R) {
-            if (key.first != q_rip && key.second != q_rip)
-                temp_R[key] = val;
+        int q_rip = bestState;
+        statesToEliminate.erase(q_rip);
+
+        /*
+         * Compute R[k,k]* for self-loops.
+         */
+        string R_kk = regexStar(R[{q_rip, q_rip}]);
+
+        /*
+         * Update all pairs (i, j) using GNFA combination rule.
+         */
+        for (int i : allStates) {
+            if (i == q_rip) continue;
+
+            string R_ik = R[{i, q_rip}];
+            if (R_ik.empty()) continue;
+
+            for (int j : allStates) {
+                if (j == q_rip) continue;
+
+                string R_kj = R[{q_rip, j}];
+                if (R_kj.empty()) continue;
+
+                string R_old = R[{i,j}];
+                string R_new = regexConcat(regexConcat(R_ik, R_kk), R_kj);
+
+                R[{i,j}] = regexUnion(R_old, R_new);
+            }
         }
-        R = temp_R;
+
+        /*
+         * Remove all transitions involving k.
+         */
+        map<pair<int,int>, string> temp;
+        for (auto &p : R) {
+            if (p.first.first != q_rip && p.first.second != q_rip)
+                temp[p.first] = p.second;
+        }
+        R = std::move(temp);
     }
 
-    /* ==========================================================
-       Step 5: When only newStart and newFinal remain,
-               return the regex R[s,f]
-       ========================================================== */
+    /*
+     * Final regex is the expression from newStart to newFinal.
+     */
+    string raw = R[{newStart, newFinal}];
 
-    return R[{newStart, newFinal}];
+    if (raw.empty()) return "";
+
+    /*
+     * Parse and prettify the regex using AST normalizer.
+     */
+    auto ast = parseRegexToAST(raw);
+    ast = prettifyRegexAST(ast);
+
+    return ast->toString();
 }

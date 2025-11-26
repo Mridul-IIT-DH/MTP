@@ -39,26 +39,10 @@ void nfaToRegex() {
     cin >> nfaBaseName;
 
     // --------------------------------------------------------------
-    // Step 2: Construct the full path to the input automaton.
-    //
-    // NOTE: The condition checking prefixes is redundant (same action
-    //       on both branches), but retained for naming consistency.
+    // Step 2: Construct the full path to the input automaton
     // --------------------------------------------------------------
-    string nfaInputPath;
-
-    if (nfaBaseName.rfind("nfa_", 0) == 0 ||
-        nfaBaseName.rfind("enfa_", 0) == 0 ||
-        nfaBaseName.rfind("min_", 0) == 0 ||
-        nfaBaseName.rfind("pro_", 0) == 0 ||
-        nfaBaseName.rfind("bro_", 0) == 0)
-    {
-        cout << "(Reading from inputs folder...)" << endl;
-        nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
-    }
-    else {
-        cout << "(Reading from inputs folder...)" << endl;
-        nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
-    }
+    cout << "(Reading from inputs folder...)" << endl;
+    string nfaInputPath = "../../inputs/" + nfaBaseName + ".txt";
 
     // --------------------------------------------------------------
     // Step 3: Read the automaton from text file.
